@@ -5,6 +5,8 @@ from typing import Any, Awaitable, Dict, List, Optional
 
 from awesomeversion import AwesomeVersion, AwesomeVersionException
 
+from supervisor.addons.const import SnapshotAddonMode
+
 from ..const import (
     ATTR_ADVANCED,
     ATTR_APPARMOR,
@@ -30,6 +32,7 @@ from ..const import (
     ATTR_HOST_PID,
     ATTR_IMAGE,
     ATTR_INGRESS,
+    ATTR_INGRESS_STREAM,
     ATTR_INIT,
     ATTR_JOURNALD,
     ATTR_KERNEL_MODULES,
@@ -76,6 +79,7 @@ from ..const import (
 )
 from ..coresys import CoreSys, CoreSysAttributes
 from ..docker.const import Capabilities
+from .const import ATTR_SNAPSHOT
 from .options import AddonOptions, UiOptions
 from .validate import RE_SERVICE, RE_VOLUME
 
@@ -371,6 +375,11 @@ class AddonModel(CoreSysAttributes, ABC):
         return self.data.get(ATTR_SNAPSHOT_POST)
 
     @property
+    def snapshot_mode(self) -> SnapshotAddonMode:
+        """Return if snapshot is hot/cold."""
+        return self.data[ATTR_SNAPSHOT]
+
+    @property
     def default_init(self) -> bool:
         """Return True if the add-on have no own init."""
         return self.data[ATTR_INIT]
@@ -389,6 +398,11 @@ class AddonModel(CoreSysAttributes, ABC):
     def ingress_panel(self) -> Optional[bool]:
         """Return True if the add-on access support ingress."""
         return None
+
+    @property
+    def ingress_stream(self) -> bool:
+        """Return True if post requests to ingress should be streamed."""
+        return self.data[ATTR_INGRESS_STREAM]
 
     @property
     def with_gpio(self) -> bool:

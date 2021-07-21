@@ -7,6 +7,8 @@ import uuid
 
 import voluptuous as vol
 
+from supervisor.addons.const import SnapshotAddonMode
+
 from ..const import (
     ARCH_ALL,
     ATTR_ACCESS_TOKEN,
@@ -43,6 +45,7 @@ from ..const import (
     ATTR_INGRESS_ENTRY,
     ATTR_INGRESS_PANEL,
     ATTR_INGRESS_PORT,
+    ATTR_INGRESS_STREAM,
     ATTR_INGRESS_TOKEN,
     ATTR_INIT,
     ATTR_JOURNALD,
@@ -107,6 +110,7 @@ from ..validate import (
     uuid_match,
     version_tag,
 )
+from .const import ATTR_SNAPSHOT
 from .options import RE_SCHEMA_ELEMENT
 
 _LOGGER: logging.Logger = logging.getLogger(__name__)
@@ -158,6 +162,14 @@ def _warn_addon_config(config: Dict[str, Any]):
     ):
         _LOGGER.warning(
             "Add-on have full device access, and selective device access in the configuration. Please report this to the maintainer of %s",
+            name,
+        )
+
+    if config.get(ATTR_SNAPSHOT, SnapshotAddonMode.HOT) == SnapshotAddonMode.COLD and (
+        config.get(ATTR_SNAPSHOT_POST) or config.get(ATTR_SNAPSHOT_PRE)
+    ):
+        _LOGGER.warning(
+            "Add-on which only support COLD backups trying to use post/pre commands. Please report this to the maintainer of %s",
             name,
         )
 
@@ -248,6 +260,7 @@ _SCHEMA_ADDON_CONFIG = vol.Schema(
             network_port, vol.Equal(0)
         ),
         vol.Optional(ATTR_INGRESS_ENTRY): str,
+        vol.Optional(ATTR_INGRESS_STREAM, default=False): vol.Boolean(),
         vol.Optional(ATTR_PANEL_ICON, default="mdi:puzzle"): str,
         vol.Optional(ATTR_PANEL_TITLE): str,
         vol.Optional(ATTR_PANEL_ADMIN, default=True): vol.Boolean(),
@@ -284,6 +297,9 @@ _SCHEMA_ADDON_CONFIG = vol.Schema(
         vol.Optional(ATTR_SNAPSHOT_EXCLUDE): [str],
         vol.Optional(ATTR_SNAPSHOT_PRE): str,
         vol.Optional(ATTR_SNAPSHOT_POST): str,
+        vol.Optional(ATTR_SNAPSHOT, default=SnapshotAddonMode.HOT): vol.Coerce(
+            SnapshotAddonMode
+        ),
         vol.Optional(ATTR_OPTIONS, default={}): dict,
         vol.Optional(ATTR_SCHEMA, default={}): vol.Any(
             vol.Schema(

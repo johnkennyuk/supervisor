@@ -1,7 +1,7 @@
 """A collection of tasks."""
 import logging
 
-from ..const import AddonState, HostFeature
+from ..const import AddonState
 from ..coresys import CoreSysAttributes
 from ..exceptions import (
     AddonsError,
@@ -12,6 +12,7 @@ from ..exceptions import (
     MulticastError,
     ObserverError,
 )
+from ..host.const import HostFeature
 from ..jobs.decorator import Job, JobCondition
 
 _LOGGER: logging.Logger = logging.getLogger(__name__)
@@ -204,9 +205,9 @@ class Tasks(CoreSysAttributes):
         Try 2 times to call API before we restart Home-Assistant. Maybe we had
         a delay in our system.
         """
-        # If Home-Assistant is active
+        # Home-Assistant is active/running
         if (
-            await self.sys_homeassistant.core.is_failed()
+            not await self.sys_homeassistant.core.is_running()
             or not self.sys_homeassistant.watchdog
             or self.sys_homeassistant.error_state
         ):
@@ -215,7 +216,7 @@ class Tasks(CoreSysAttributes):
         # Init cache data
         retry_scan = self._cache.get(HASS_WATCHDOG_API, 0)
 
-        # If Home-Assistant API is up
+        # Home-Assistant API is up
         if (
             self.sys_homeassistant.core.in_progress
             or await self.sys_homeassistant.api.check_api_state()
